@@ -3,6 +3,7 @@ import { detectContextFiles } from '../detector/context-file.js';
 import { scanProject } from '../detector/project.js';
 import { parseContextFile } from '../parser/context-file.js';
 import { rules } from '../rules/index.js';
+import { tokenBudget } from '../rules/token-budget.js';
 import { reportTerminal } from '../reporter/terminal.js';
 import { reportJson } from '../reporter/json.js';
 import { SEVERITY } from '../constants.js';
@@ -47,16 +48,28 @@ export async function check(projectDir, options = {}) {
   // 3. Lint each context file
   for (const contextFile of contextFiles) {
     const parsed = parseContextFile(contextFile.content);
-    const allDiagnostics = [];
+    const otherDiagnostics = [];
 
-    for (const rule of rules) {
+    // Run all rules except token-budget first
+    const nonBudgetRules = rules.filter(r => r.name !== 'token-budget');
+    for (const rule of nonBudgetRules) {
       try {
         const results = rule.run(parsed, projectData);
-        allDiagnostics.push(...results);
+        otherDiagnostics.push(...results);
       } catch (err) {
         console.error(`Rule ${rule.name} threw an error: ${err.message}`);
       }
     }
+
+    // Run token-budget last, passing all other diagnostics
+    let budgetDiagnostics = [];
+    try {
+      budgetDiagnostics = tokenBudget.run(parsed, projectData, otherDiagnostics);
+    } catch (err) {
+      console.error(`Rule token-budget threw an error: ${err.message}`);
+    }
+
+    const allDiagnostics = [...otherDiagnostics, ...budgetDiagnostics];
 
     // Filter by severity
     const filtered = allDiagnostics.filter(
