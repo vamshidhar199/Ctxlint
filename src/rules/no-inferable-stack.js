@@ -20,6 +20,7 @@ const EXCEPTION_PATTERNS = [
   /not\s+the\s+usual/i,
   /version/i,
   /\d+\+/,
+  /docstring/i,   // docstring conventions are project choices, not inferable from config
 ];
 
 // Map of tech name variants to what they might appear as in deps/languages/frameworks

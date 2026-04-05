@@ -8,8 +8,12 @@ const DIR_PATTERN = /`([^`\s]+\/)`/g;
 
 const COMMAND_LINE_PREFIXES = /^\s*(\$|>|npm|yarn|pnpm|bun|pip|uv|cargo|go|make|gradle|mvn|npx|node|python|ruby|bash|sh|zsh)\s/;
 
-// Patterns that look like file paths but are actually npm package names or other non-file things
-const PACKAGE_LIKE_PATTERN = /^(@[a-z][\w.-]*\/[a-z][\w.-]*|[a-z][\w.-]*)$/;
+// Well-known generated / excluded directories that may not exist in a fresh clone
+const GENERATED_DIRS = new Set([
+  'node_modules', 'dist', 'build', '.next', '.nuxt', 'target', 'vendor',
+  '__pycache__', '.venv', 'venv', 'coverage', '.turbo', '.vercel', '.output',
+  '.cache', 'out', '.parcel-cache',
+]);
 
 function isLikelyPackageName(path) {
   // npm package names: @scope/pkg or simple-name
@@ -18,6 +22,40 @@ function isLikelyPackageName(path) {
   // If it has no slash and no extension that's a project file extension, skip
   if (!path.includes('/') && /^[a-z][\w.-]*$/.test(path)) return true;
   return false;
+}
+
+// Common local source directories — paths starting with these are never npm packages
+const LOCAL_DIR_PREFIXES = new Set([
+  'src', 'lib', 'app', 'test', 'tests', 'pkg', 'cmd', 'internal',
+  'server', 'client', 'api', 'pages', 'components', 'utils', 'hooks',
+  'services', 'models', 'routes', 'middleware', 'config', 'scripts',
+  'tools', 'docs', 'examples', 'packages', 'crates', 'libs',
+]);
+
+function isNpmSubpathImport(path) {
+  // Matches patterns like "react-dom/server.edge", "some-pkg/subpath/file"
+  // where the first segment looks like a package name (no leading . or /)
+  // and the path doesn't resemble a local filesystem path
+  if (path.startsWith('.') || path.startsWith('/')) return false;
+  const segments = path.split('/');
+  if (segments.length < 2) return false;
+  const pkg = segments[0];
+  // Exclude common local source directory names
+  if (LOCAL_DIR_PREFIXES.has(pkg)) return false;
+  // Package names are lowercase with hyphens/dots
+  if (!/^[a-z][\w.-]*$/.test(pkg)) return false;
+  // Must contain a hyphen (real npm packages with subpath exports are hyphenated)
+  // or be a scoped package — bare single-word paths like "go/types" are language paths
+  if (!pkg.includes('-') && !pkg.includes('.')) return false;
+  // If it has a file extension in any segment (e.g. server.edge, client.mjs), treat as npm subpath
+  return segments.slice(1).some(s => /\.[a-z]+$/.test(s));
+}
+
+function containsGeneratedDirSegment(path) {
+  // Returns true if any path segment is a well-known generated directory
+  const normalized = path.replace(/\\/g, '/').replace(/\/$/, '');
+  const segments = normalized.split('/');
+  return segments.some(s => GENERATED_DIRS.has(s));
 }
 
 function findFileSuggestion(missingPath, projectData) {
@@ -63,11 +101,20 @@ export const staleFileRef = {
         // Skip URLs
         if (p.startsWith('http://') || p.startsWith('https://')) return;
 
+        // Skip parent-relative paths — can't verify references to sibling repos
+        if (p.startsWith('../')) return;
+
         // Skip glob patterns
         if (p.includes('*')) return;
 
         // Skip likely package names
         if (isLikelyPackageName(p)) return;
+
+        // Skip npm package subpath imports (e.g. react-dom/server.edge)
+        if (isNpmSubpathImport(p)) return;
+
+        // Skip paths referencing well-known generated directories
+        if (containsGeneratedDirSegment(p)) return;
 
         // Check if file/dir exists
         const fileExists = projectData.files.has(p);

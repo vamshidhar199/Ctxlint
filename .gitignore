@@ -2,3 +2,4 @@ node_modules/
 coverage/
 validation-results/
 *.bak
+ctxlint-claude-code-spec.md
