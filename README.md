@@ -3,8 +3,10 @@
 Lint your AI agent context files. Find stale references, inferable content, and token waste.
 
 ```bash
-npx ctxlint check
+npx @ctxlint/ctxlint check
 ```
+
+> **Early-stage project — contributions welcome.** The rules work well on real repos, but there are edge cases (monorepos, unusual project layouts) where precision can be improved. If you hit a false positive or missing check, please open an issue or PR.
 
 ## Why this exists
 
@@ -27,16 +29,16 @@ An ETH Zurich study ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2
 
 ```bash
 # Check for issues in the current directory
-npx ctxlint check
+npx @ctxlint/ctxlint check
 
 # Check a specific project
-npx ctxlint check /path/to/project
+npx @ctxlint/ctxlint check /path/to/project
 
 # Output machine-readable JSON (for CI)
-npx ctxlint check --format json
+npx @ctxlint/ctxlint check --format json
 
 # Only show warnings and errors (hide info)
-npx ctxlint check --severity warn
+npx @ctxlint/ctxlint check --severity warn
 ```
 
 ## Commands
@@ -149,14 +151,56 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npx ctxlint check --severity warn
+      - run: npx @ctxlint/ctxlint check --severity warn
 ```
 
 ### Pre-commit hook
 
 ```bash
 # .git/hooks/pre-commit
-npx ctxlint diff --fail-on-stale
+npx @ctxlint/ctxlint diff --fail-on-stale
+```
+
+## Current limitations
+
+ctxlint is useful today but not exhaustive. Known gaps:
+
+- **Monorepo path resolution** — paths written relative to a sub-package (e.g. `src/` in a `packages/foo/` workspace) are flagged as stale even though they're valid within that package's context.
+- **Non-JS ecosystems** — `stale-command` and `init` are optimized for npm/pnpm/yarn projects. Rust, Go, and Python projects get partial coverage.
+- **Semantic staleness** — rules check structural correctness (does the file exist?), not semantic freshness (is the description still accurate?).
+- **Precision target** — validated at ~91% precision across 5 real-world repos. Some false positives remain in unusual project layouts.
+
+See [`analysis.md`](./analysis.md) for the full false-positive breakdown from real-repo validation.
+
+## Contributing
+
+Contributions are very welcome — this project is at an early stage and the goal is to grow it into a robust, community-maintained tool.
+
+**Good first issues:**
+- Add a rule for a pattern you've seen in real context files
+- Improve monorepo path resolution in `stale-file-ref`
+- Add `stale-command` support for `Makefile`, `pyproject.toml`, or `Cargo.toml`
+- Improve `init` output for Python/Rust/Go projects
+
+**How to contribute:**
+1. Fork and clone the repo
+2. `npm install`
+3. Write your rule in `src/rules/` — each rule exports `{ name, severity, description, run(parsedFile, projectData) → Diagnostic[] }`
+4. Add tests in `test/rules/` and a fixture in `test/fixtures/` if needed
+5. Run `npm test` — all 110 tests must pass
+6. Open a PR
+
+See `AGENTS.md` for architecture notes and project conventions.
+
+## Installing
+
+```bash
+# Run without installing
+npx @ctxlint/ctxlint check
+
+# Or install globally
+npm install -g @ctxlint/ctxlint
+ctxlint check
 ```
 
 ## Research
@@ -166,4 +210,4 @@ npx ctxlint diff --fail-on-stale
 
 ## License
 
-MIT
+MIT © Vamshidhar Reddy Parupally

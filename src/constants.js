@@ -92,7 +92,7 @@ export const STYLE_GUIDE_PATTERNS = [
   /use\s+(single|double)\s+quotes?/i,
   /trailing\s+commas?/i,
   /max(imum)?\s+(line\s+)?length/i,
-  /\b(use|follow|enforce|apply|must\s+use)\s+\S.*naming\s+convention|naming\s+convention\s+(must|should|is\s+required|applies)/i,
+  /^[\s*\-–•]*\b(use|follow|apply|enforce)\b.{0,60}naming\s+convention/im,
   /\d+\s+(spaces?|tabs?)\s+(for\s+)?indent/i,
   /tab\s+size/i,
   /line\s+endings?/i,

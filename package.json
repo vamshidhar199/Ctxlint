@@ -1,12 +1,19 @@
 {
-  "name": "ctxlint",
+  "name": "@ctxlint/ctxlint",
   "version": "0.1.0",
   "description": "Lint AI agent context files. Find what's hurting your AGENTS.md.",
   "type": "module",
   "bin": {
     "ctxlint": "./bin/ctxlint.js"
   },
-  "main": "./src/cli.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vamshidhar199/Ctxlint.git"
+  },
+  "homepage": "https://github.com/vamshidhar199/Ctxlint#readme",
+  "bugs": {
+    "url": "https://github.com/vamshidhar199/Ctxlint/issues"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,7 +24,7 @@
     "ai-coding", "linter", "developer-tools", "token-optimization",
     "coding-agents", "context-files"
   ],
-  "author": "",
+  "author": "Vamshidhar Reddy Parupally",
   "license": "MIT",
   "engines": {
     "node": ">=18"
