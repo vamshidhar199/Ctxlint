@@ -10,7 +10,7 @@ npx @ctxlint/ctxlint check
 
 ## Why this exists
 
-An ETH Zurich study ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2026) found that bloated context files tend to reduce agent task success while increasing inference costs by over 20%. A complementary study by Lulla et al. ([arXiv:2601.20404](https://arxiv.org/abs/2601.20404)) showed that well-structured, minimal context files correlate with ~28% lower runtime and ~16% fewer tokens. The takeaway from both: **less is more**. ctxlint tells you what to remove, not what to add.
+Gloaguen et al. ([2026](https://arxiv.org/abs/2602.11988)) found that bloated context files reduce task success rates and increase inference costs by over 20%. Lulla et al. ([2026](https://arxiv.org/abs/2601.20404)) found that well-structured context files correlate with 28% faster agent runtime. ctxlint helps you get from the first to the second.
 
 ## What it checks
 
@@ -25,20 +25,31 @@ An ETH Zurich study ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2
 | `no-style-guide` | info | Style rules that belong in a linter, not a context file |
 | `token-budget` | warn | Token cost estimate and signal-to-noise ratio |
 
+## Install
+
+```bash
+# Run without installing
+npx @ctxlint/ctxlint check
+
+# Or install globally
+npm install -g @ctxlint/ctxlint
+ctxlint check
+```
+
 ## Quick start
 
 ```bash
 # Check for issues in the current directory
-npx @ctxlint/ctxlint check
+ctxlint check
 
 # Check a specific project
-npx @ctxlint/ctxlint check /path/to/project
+ctxlint check /path/to/project
 
 # Output machine-readable JSON (for CI)
-npx @ctxlint/ctxlint check --format json
+ctxlint check --format json
 
 # Only show warnings and errors (hide info)
-npx @ctxlint/ctxlint check --severity warn
+ctxlint check --severity warn
 ```
 
 ## Commands
@@ -151,14 +162,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npx @ctxlint/ctxlint check --severity warn
+      - run: npm install -g @ctxlint/ctxlint
+      - run: ctxlint check --severity warn
 ```
 
 ### Pre-commit hook
 
 ```bash
 # .git/hooks/pre-commit
-npx @ctxlint/ctxlint diff --fail-on-stale
+npm install -g @ctxlint/ctxlint
+ctxlint diff --fail-on-stale
 ```
 
 ## Current limitations
@@ -192,20 +205,9 @@ Contributions are very welcome — this project is at an early stage and the goa
 
 See `AGENTS.md` for architecture notes and project conventions.
 
-## Installing
-
-```bash
-# Run without installing
-npx @ctxlint/ctxlint check
-
-# Or install globally
-npm install -g @ctxlint/ctxlint
-ctxlint check
-```
-
 ## Research
 
-- **Gloaguen et al., ETH Zurich (2026)**: [Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — found that bloated context files tend to *reduce* task success rates while increasing inference cost by over 20%. Recommends minimal, focused context files.
+- **Gloaguen et al. (2026)**: [Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — found that bloated context files tend to *reduce* task success rates while increasing inference cost by over 20%. Recommends minimal, focused context files.
 - **Lulla et al. (2026)**: [On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents: arXiv:2601.20404](https://arxiv.org/abs/2601.20404) — well-structured AGENTS.md files correlate with ~28% lower runtime and ~16% reduced token consumption while maintaining comparable task completion rates.
 
 ## License
