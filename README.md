@@ -10,7 +10,7 @@ npx @ctxlint/ctxlint check
 
 ## Why this exists
 
-An ETH Zurich study ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2026) found that bloated context files reduce AI coding agent task success by 3% while increasing costs by 20%. A follow-up study by Lulla et al. ([arXiv:2601.20404](https://arxiv.org/abs/2601.20404)) found that 100% of auto-generated context files contain directory trees that agents never use. ctxlint operationalizes these findings: it tells you what to **remove**, not what to add.
+An ETH Zurich study ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988), Feb 2026) found that bloated context files tend to reduce agent task success while increasing inference costs by over 20%. A complementary study by Lulla et al. ([arXiv:2601.20404](https://arxiv.org/abs/2601.20404)) showed that well-structured, minimal context files correlate with ~28% lower runtime and ~16% fewer tokens. The takeaway from both: **less is more**. ctxlint tells you what to remove, not what to add.
 
 ## What it checks
 
@@ -205,8 +205,8 @@ ctxlint check
 
 ## Research
 
-- **ETH Zurich (2026)**: [Automated Coding Agents Context Files: arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — bloated context files reduce agent performance by 3%, increase costs by 20%.
-- **Lulla et al. (2026)**: [Context Engineering for Coding Agents: arXiv:2601.20404](https://arxiv.org/abs/2601.20404) — 100% of auto-generated context files contain unused directory trees.
+- **Gloaguen et al., ETH Zurich (2026)**: [Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — found that bloated context files tend to *reduce* task success rates while increasing inference cost by over 20%. Recommends minimal, focused context files.
+- **Lulla et al. (2026)**: [On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents: arXiv:2601.20404](https://arxiv.org/abs/2601.20404) — well-structured AGENTS.md files correlate with ~28% lower runtime and ~16% reduced token consumption while maintaining comparable task completion rates.
 
 ## License
 
