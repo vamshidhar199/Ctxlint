@@ -1,6 +1,9 @@
 import { Command } from 'commander';
 import { resolve } from 'path';
 import { check } from './commands/check.js';
+import { init } from './commands/init.js';
+import { slim } from './commands/slim.js';
+import { diff } from './commands/diff.js';
 
 const program = new Command();
 
@@ -26,8 +29,12 @@ program
   .option('--dry-run', 'Print to stdout instead of writing')
   .option('--force', 'Overwrite existing file')
   .action(async (projectPath, options) => {
-    console.log('init command not yet implemented in Phase 1');
-    process.exit(0);
+    const exitCode = await init(projectPath || process.cwd(), {
+      format: options.format,
+      dryRun: options.dryRun || false,
+      force: options.force || false,
+    });
+    process.exit(exitCode);
   });
 
 program
@@ -36,8 +43,15 @@ program
   .option('--dry-run', 'Show diff without modifying')
   .option('--backup', 'Save original as .bak')
   .action(async (filePath, options) => {
-    console.log('slim command not yet implemented in Phase 1');
-    process.exit(0);
+    if (!filePath) {
+      console.error('Usage: ctxlint slim <file> [--dry-run] [--backup]');
+      process.exit(1);
+    }
+    const exitCode = await slim(filePath, {
+      dryRun: options.dryRun || false,
+      backup: options.backup || false,
+    });
+    process.exit(exitCode);
   });
 
 program
@@ -46,8 +60,11 @@ program
   .option('--since <ref>', 'Compare against date or git ref')
   .option('--fail-on-stale', 'Exit 1 if drift detected (for CI)')
   .action(async (projectPath, options) => {
-    console.log('diff command not yet implemented in Phase 1');
-    process.exit(0);
+    const exitCode = await diff(projectPath || process.cwd(), {
+      since: options.since || null,
+      failOnStale: options.failOnStale || false,
+    });
+    process.exit(exitCode);
   });
 
 // Default: run check on current directory
