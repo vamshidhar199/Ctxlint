@@ -26,7 +26,10 @@ function trigramOverlap(setA, setB) {
   for (const t of setA) {
     if (setB.has(t)) intersection++;
   }
-  return intersection / Math.min(setA.size, setB.size);
+  // Use max (Jaccard-style) to avoid false positives when one section is much
+  // shorter than the other — short sections share many function-word trigrams
+  // with any English text, making min() overly sensitive.
+  return intersection / Math.max(setA.size, setB.size);
 }
 
 function splitReadmeSections(content) {
