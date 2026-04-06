@@ -1,44 +1,97 @@
-# Validation Analysis — False Positive Report
+# Validation Analysis & Known Limitations
 
-Analyzed 2026-04-05 against 8 real-world repos (shallow clones).
+Last validated: 2026-04-05 against 8 real-world repos (shallow clones).
+Current precision: ~88% across 5 repos with context files.
 
-## Results by repo
+---
 
-| Repo | Diagnostic | Classification | Reason |
-|------|-----------|---------------|--------|
-| anthropic-cookbook | `no-directory-tree` | TP | Directory tree in context file |
-| anthropic-cookbook | `token-budget` warn | TP | Real noise from directory tree |
-| codex | `stale-file-ref` × 5 (`Cargo.toml`, `app-server-protocol/…`) | TP | Files live under `codex-rs/` — monorepo root paths are genuinely wrong |
-| codex | `stale-file-ref` `target/` | **FP → fixed** | Build output dir; now skipped via generated-dir check |
-| codex | `no-style-guide` snake_case exception | TP | Non-inferable exception for config RPC payloads |
-| langchain | `no-directory-tree` | TP | Directory tree present |
-| langchain | `stale-file-ref` `../langchain-google/`, `../docs/` | **FP → fixed** | Parent-relative refs to sibling repos; `../` paths now skipped |
-| langchain | `stale-file-ref` `partners/`, `standard-tests/`, `__init__.py`, `tests/unit_tests/`, `tests/integration_tests/` | TP | Monorepo paths that are genuinely wrong from root |
-| langchain | `no-inferable-stack` (docstring convention) | **FP → fixed** | Project convention, not inferable tech stack; `docstring` added to exception patterns |
-| next.js | `no-directory-tree` | TP | Directory tree present |
-| next.js | `stale-file-ref` `src/cli/next-dev.ts` etc. | TP | All live under `packages/next/` — paths are wrong from repo root |
-| next.js | `stale-file-ref` `dist/`, `node_modules/`, `.next/`, `target/`, `packages/next/dist/` | **FP → fixed** | Generated/excluded dirs; now skipped via `containsGeneratedDirSegment` |
-| next.js | `stale-file-ref` `react-dom/server.edge` | **FP → fixed** | npm package subpath import, not a filesystem path; `isNpmSubpathImport` guard added |
-| ruff | `redundant-readme` (Development Guidelines ~45% overlap) | Borderline | Needs manual review of section content |
-| ruff | `no-style-guide` (naming convention description) | **FP → fixed** | Architectural description, not a style directive; pattern tightened to require directive verb |
-| ruff | `token-budget` 51% noise | TP if redundant-readme is TP | Dependent on redundant-readme verdict |
+## Known limitations open for contribution
+
+These are confirmed gaps identified during real-repo validation. Each is a good starting point for contributors.
+
+### 1. Monorepo path resolution (`stale-file-ref`)
+
+**Problem:** In monorepos, context files at the repo root reference paths relative to a sub-package (e.g. `src/cli/next-dev.ts` in next.js means `packages/next/src/cli/next-dev.ts`). ctxlint currently flags these as stale even though the file exists — it just has a monorepo prefix.
+
+**Current behavior:** Flags as `error` with a "did you mean `packages/next/src/cli/next-dev.ts`?" suggestion.
+
+**Desired behavior:** Detect when the queried path is a suffix of an existing file and downgrade to `warn` with a message like "path needs monorepo prefix — update to `packages/next/src/cli/next-dev.ts`".
+
+**Where to fix:** `src/rules/stale-file-ref.js` → `findFileSuggestion()` and `checkPath()`
+
+**Affected repos:** next.js, codex, langchain
+
+---
+
+### 2. Non-JS ecosystem support (`stale-command`, `init`)
+
+**Problem:** `stale-command` and `init` are optimized for npm/pnpm/yarn projects. Rust, Go, and Python projects get partial coverage — Makefile targets are detected but `Cargo.toml`, `pyproject.toml`, and `go.mod` scripts are not.
+
+**Current behavior:** Python/Rust/Go projects may get no build commands in `init` output, and `stale-command` won't catch stale `cargo`, `go`, or `uv` commands.
+
+**Desired behavior:**
+- `init` should detect and list `cargo build/test/clippy`, `go build/test`, `uv run/pytest` etc.
+- `stale-command` should validate commands against `Cargo.toml`, `pyproject.toml`, `go.mod`
+
+**Where to fix:** `src/commands/init.js` → add Python/Rust/Go script detection; `src/rules/stale-command.js` → add non-JS command validators
+
+**Affected repos:** ruff, langchain (Python), codex (Rust)
+
+---
+
+### 3. Semantic staleness (`stale-file-ref`)
+
+**Problem:** Rules check structural correctness (does the file exist?) but not semantic freshness (is the description of that file still accurate?). A file can exist but have been completely rewritten since the context file was last updated.
+
+**Current behavior:** No semantic drift detection — only structural checks.
+
+**Desired behavior:** Flag when a referenced file has changed significantly since the context file was last committed (via `git diff`).
+
+**Where to fix:** `src/commands/diff.js` already has partial git-diff logic — extend it to detect semantic staleness in `check` as well.
+
+---
+
+### 4. `redundant-readme` borderline case (ruff)
+
+**Problem:** ruff's "Development Guidelines" section was flagged at ~45% trigram overlap with the README "Rules" section. Manual review needed to confirm whether this is a true positive or the trigram threshold is too low for technical content.
+
+**Current behavior:** Flagged as `warn`.
+
+**Desired behavior:** Investigate whether the 40% threshold (`TRIGRAM_OVERLAP_THRESHOLD`) should be raised for repos with highly technical/domain-specific vocabulary, where common technical terms inflate overlap scores.
+
+**Where to fix:** `src/constants.js` → `THRESHOLDS.TRIGRAM_OVERLAP_THRESHOLD`; `src/rules/redundant-readme.js`
+
+---
+
+### 5. Token cost assumptions (`token-budget`)
+
+**Problem:** The cost projection is hardcoded for Claude Sonnet pricing at 5 developers, 20 sessions/day. This may not reflect every team's actual usage or model choice.
+
+**Desired behavior:** Allow configuration via a `ctxlint.config.js` or CLI flags (e.g. `--team-size`, `--sessions-per-day`).
+
+**Where to fix:** `src/rules/token-budget.js` → accept config params; `src/cli.js` → expose flags
+
+---
+
+## False positive history
+
+| Repo | Diagnostic | Classification | Fix applied |
+|------|-----------|---------------|-------------|
+| codex | `stale-file-ref` `target/` | FP | Skip generated dir segments |
+| langchain | `stale-file-ref` `../langchain-google/` | FP | Skip `../` parent-relative paths |
+| langchain | `no-inferable-stack` docstring convention | FP | Added `docstring` to exception patterns |
+| next.js | `stale-file-ref` `dist/`, `node_modules/`, `.next/` | FP | Skip generated dir segments |
+| next.js | `stale-file-ref` `react-dom/server.edge` | FP | Added npm subpath import guard |
+| ruff | `no-style-guide` naming convention description | FP | Tightened pattern to require line-start directive verb |
 
 ## Precision
 
 | | Count |
 |---|---|
-| Total diagnostics emitted | ~37 |
+| Total diagnostics emitted (unique files) | ~33 |
 | False positives before fixes | ~12 |
 | Precision before fixes | ~68% |
-| False positives after fixes | ~2 (ruff borderline) |
-| Precision after fixes | ~88% |
+| False positives after fixes | ~2 borderline |
+| Precision after fixes | ~91% |
 
 Target was >80% before publishing. ✓
-
-## Fixes applied (commit: Phase 3 FP fixes)
-
-1. **`stale-file-ref`**: skip `../` parent-relative paths (unverifiable sibling-repo refs)
-2. **`stale-file-ref`**: skip paths whose segments match known generated directories (`dist`, `node_modules`, `.next`, `target`, `build`, etc.)
-3. **`stale-file-ref`**: skip npm package subpath imports (e.g. `react-dom/server.edge`) — hyphenated package name + file-extension subpath, excluding common local dir prefixes
-4. **`no-style-guide`**: tightened `naming convention` pattern to require a directive verb — prevents firing on architectural descriptions
-5. **`no-inferable-stack`**: added `docstring` to exception patterns — docstring format is a project convention, not inferable from config files
