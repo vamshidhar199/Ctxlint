@@ -4,7 +4,8 @@
       "Bash(chmod +x:*)",
       "Bash(npm install:*)",
       "Bash(npm test:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm view:*)"
     ]
   }
 }

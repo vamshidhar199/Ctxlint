@@ -1,7 +1,7 @@
 {
   "name": "@ctxlint/ctxlint",
-  "version": "0.1.4",
-  "description": "Lint AI agent context files. Find what's hurting your AGENTS.md.",
+  "version": "1.0.2",
+  "description": "Lint your AGENTS.md, CLAUDE.md, and AI agent context files. Catch stale refs, dead commands, and token waste.",
   "type": "module",
   "bin": {
     "ctxlint": "./bin/ctxlint.js"
@@ -20,6 +20,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "keywords": [
+    "ctxlint",
     "agents-md",
     "claude-md",
     "gemini-md",
@@ -29,7 +30,11 @@
     "developer-tools",
     "token-optimization",
     "coding-agents",
-    "context-files"
+    "context-files",
+    "claude-code",
+    "cursor",
+    "ai-agents",
+    "context-lint"
   ],
   "author": "Vamshidhar Reddy Parupally",
   "license": "MIT",

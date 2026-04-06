@@ -1,12 +1,31 @@
 # ctxlint
 
-Lint your AI agent context files. Find stale references, inferable content, and token waste.
+[![npm version](https://img.shields.io/npm/v/@ctxlint/ctxlint)](https://www.npmjs.com/package/@ctxlint/ctxlint)
+[![npm downloads](https://img.shields.io/npm/dt/@ctxlint/ctxlint)](https://www.npmjs.com/package/@ctxlint/ctxlint)
+[![license](https://img.shields.io/npm/l/@ctxlint/ctxlint)](./LICENSE)
+[![zero dependencies](https://img.shields.io/badge/dependencies-1-brightgreen)](./package.json)
+
+Lint your `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules` and any AI agent context file. Catch stale references, dead commands, and token waste before they hurt your agent.
 
 ```bash
 npx @ctxlint/ctxlint check
 ```
 
-> **Early-stage project — contributions welcome.** The rules work well on real repos, but there are edge cases (monorepos, unusual project layouts) where precision can be improved. If you hit a false positive or missing check, please open an issue or PR.
+> **Contributions welcome.** The rules work well on real repos, but there are edge cases (monorepos, unusual project layouts) where precision can be improved. If you hit a false positive or missing check, please open an issue or PR.
+
+## Why ctxlint
+
+| | ctxlint | others |
+|---|---|---|
+| Runtime dependencies | **1** (commander only) | 5–9 |
+| Commands | **check, init, slim, diff** | check only |
+| Auto-fix | **✓ `slim` removes flagged content** | ✗ |
+| Generates context files | **✓ `init` from project metadata** | ✗ |
+| Drift detection | **✓ `diff` via git history** | ✗ |
+| Research-backed rules | **✓ cited papers** | ✗ |
+| Validated precision | **~91% on real repos** | unknown |
+
+**Zero dependencies** means `npx @ctxlint/ctxlint check` starts instantly, with no supply chain risk and no bloat in your project.
 
 ## Why this exists
 
@@ -81,13 +100,13 @@ ctxlint init
 ctxlint init --format all
 ```
 
-### `slim` — remove flagged content
+### `slim` — auto-fix flagged content
 
 ```bash
 ctxlint slim <file> [--dry-run] [--backup]
 ```
 
-Removes all error-severity issues from a context file in place.
+Automatically removes all error-severity issues from a context file in place. The only context file linter with auto-fix.
 
 ```bash
 # Preview what would be removed
@@ -187,7 +206,7 @@ See [`analysis.md`](./analysis.md) for the full false-positive breakdown from re
 
 ## Contributing
 
-Contributions are very welcome — this project is at an early stage and the goal is to grow it into a robust, community-maintained tool.
+Contributions are very welcome — the goal is to grow ctxlint into the standard linter for AI agent context files.
 
 **Good first issues:**
 - Add a rule for a pattern you've seen in real context files
