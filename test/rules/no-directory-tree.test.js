@@ -71,7 +71,7 @@ describe('no-directory-tree rule', () => {
     const parsed = parseContextFile(content);
     const diagnostics = noDirectoryTree.run(parsed, makeProjectData());
 
-    expect(diagnostics[0].suggestion).toMatch(/Agents can explore/);
+    expect(diagnostics[0].suggestion).toMatch(/adds noise/);
   });
 
   it('does NOT flag a line that just mentions a file by name', () => {
