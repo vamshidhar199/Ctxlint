@@ -1,5 +1,5 @@
 import { readFileSync, statSync, existsSync } from 'fs';
-import { join, dirname, resolve } from 'path';
+import { join, resolve } from 'path';
 import { execSync } from 'child_process';
 import { detectContextFiles } from '../detector/context-file.js';
 import { scanProject } from '../detector/project.js';

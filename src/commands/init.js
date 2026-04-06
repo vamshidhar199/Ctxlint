@@ -1,6 +1,5 @@
-import { writeFileSync, existsSync, symlinkSync } from 'fs';
-import { join, dirname } from 'path';
-import { resolve } from 'path';
+import { writeFileSync, existsSync } from 'fs';
+import { join, resolve } from 'path';
 import { scanProject } from '../detector/project.js';
 import { detectContextFiles } from '../detector/context-file.js';
 

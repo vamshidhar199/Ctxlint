@@ -1,6 +1,6 @@
 {
   "name": "@ctxlint/ctxlint",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Lint AI agent context files. Find what's hurting your AGENTS.md.",
   "type": "module",
   "bin": {

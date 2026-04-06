@@ -1,16 +1,18 @@
 import { Command } from 'commander';
-import { resolve } from 'path';
+import { readFileSync } from 'fs';
 import { check } from './commands/check.js';
 import { init } from './commands/init.js';
 import { slim } from './commands/slim.js';
 import { diff } from './commands/diff.js';
+
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const program = new Command();
 
 program
   .name('ctxlint')
   .description('Lint AI agent context files. Find stale references, inferable content, and token waste.')
-  .version('0.1.0');
+  .version(version);
 
 program
   .command('check [path]')
