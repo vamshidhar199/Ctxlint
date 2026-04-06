@@ -85,7 +85,7 @@ export const noDirectoryTree = {
             message: `Lines ${rangeStart + 1}-${rangeEnd + 1} contain a directory tree (${lineCount} lines, ~${tokenEstimate} tokens).`,
             suggestion:
               'Agents discover file structure via ls/find on their own.\n' +
-              'ETH Zurich (2026) found this adds cost without improving task success.\n' +
+              'Agents can explore file structure on their own — this just adds noise.\n' +
               'Consider removing entirely, or keep only non-standard directories:\n' +
               '  "Non-standard: .ml-cache/ stores pre-trained model weights"',
           });

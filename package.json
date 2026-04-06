@@ -20,9 +20,16 @@
     "test:coverage": "vitest run --coverage"
   },
   "keywords": [
-    "agents-md", "claude-md", "gemini-md", "context-engineering",
-    "ai-coding", "linter", "developer-tools", "token-optimization",
-    "coding-agents", "context-files"
+    "agents-md",
+    "claude-md",
+    "gemini-md",
+    "context-engineering",
+    "ai-coding",
+    "linter",
+    "developer-tools",
+    "token-optimization",
+    "coding-agents",
+    "context-files"
   ],
   "author": "Vamshidhar Reddy Parupally",
   "license": "MIT",

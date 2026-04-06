@@ -66,12 +66,12 @@ describe('no-directory-tree rule', () => {
     expect(diagnostics[0].message).toMatch(/~\d+ tokens/);
   });
 
-  it('suggestion mentions ETH Zurich research', () => {
+  it('suggestion mentions research finding', () => {
     const content = `## Project Structure\n├── src/\n└── lib/`;
     const parsed = parseContextFile(content);
     const diagnostics = noDirectoryTree.run(parsed, makeProjectData());
 
-    expect(diagnostics[0].suggestion).toMatch(/ETH Zurich/);
+    expect(diagnostics[0].suggestion).toMatch(/Agents can explore/);
   });
 
   it('does NOT flag a line that just mentions a file by name', () => {

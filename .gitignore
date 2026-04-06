@@ -1,5 +1,6 @@
 node_modules/
 coverage/
 validation-results/
+test-install/
 *.bak
 ctxlint-claude-code-spec.md
