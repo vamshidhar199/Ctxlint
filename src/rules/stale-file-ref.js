@@ -60,9 +60,24 @@ function containsGeneratedDirSegment(path) {
 
 function findFileSuggestion(missingPath, projectData) {
   const name = basename(missingPath);
+  const normalized = missingPath.replace(/^\.\//, '').replace(/\\/g, '/').replace(/\/$/, '');
+
+  // Monorepo suffix match: e.g. "src/cli/next-dev.ts" → "packages/next/src/cli/next-dev.ts"
+  for (const f of projectData.files) {
+    if (f.endsWith('/' + normalized)) {
+      return { path: f, isMonorepoSuffix: true };
+    }
+  }
+  for (const d of projectData.dirs) {
+    if (d.endsWith('/' + normalized)) {
+      return { path: d + '/', isMonorepoSuffix: true };
+    }
+  }
+
+  // Fallback: basename-only match
   for (const f of projectData.files) {
     if (basename(f) === name) {
-      return f;
+      return { path: f, isMonorepoSuffix: false };
     }
   }
   return null;
@@ -126,18 +141,29 @@ export const staleFileRef = {
           const fullPath = join(projectData.dir, p);
           if (existsSync(fullPath)) return;
 
-          const suggestion = findFileSuggestion(p, projectData);
+          const result = findFileSuggestion(p, projectData);
 
-          diagnostics.push({
-            rule: 'stale-file-ref',
-            severity: 'error',
-            line: i + 1,
-            endLine: null,
-            message: `references \`${rawPath}\` but this file does not exist`,
-            suggestion: suggestion
-              ? `Did you mean \`${suggestion}\`? Stale references actively mislead agents into searching for non-existent files.`
-              : 'Stale references actively mislead agents into searching for non-existent files.',
-          });
+          if (result && result.isMonorepoSuffix) {
+            diagnostics.push({
+              rule: 'stale-file-ref',
+              severity: 'warn',
+              line: i + 1,
+              endLine: null,
+              message: `\`${rawPath}\` needs a monorepo prefix`,
+              suggestion: `Update to \`${result.path}\` (file exists in this repo with a different prefix).`,
+            });
+          } else {
+            diagnostics.push({
+              rule: 'stale-file-ref',
+              severity: 'error',
+              line: i + 1,
+              endLine: null,
+              message: `references \`${rawPath}\` but this file does not exist`,
+              suggestion: result
+                ? `Did you mean \`${result.path}\`? Stale references actively mislead agents into searching for non-existent files.`
+                : 'Stale references actively mislead agents into searching for non-existent files.',
+            });
+          }
         }
       };
 

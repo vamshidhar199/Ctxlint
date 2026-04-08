@@ -7,6 +7,17 @@ const PM_DIRECT_SCRIPT_PATTERN = /`(pnpm|yarn|bun)\s+([\w:.-]+)`/g;
 const MAKE_TARGET_PATTERN = /`make\s+([\w.-]+)`/g;
 const GENERIC_CMD_PATTERN = /(?:^|\n)\s*(?:\$|>)\s*((?:npm|yarn|pnpm|bun|pip|uv|cargo|go|make|gradle|mvn)\s+.+)/gm;
 
+// Non-JS ecosystem patterns
+const CARGO_CMD_PATTERN = /`cargo\s+([\w:.-]+)/g;
+const GO_CMD_PATTERN = /`go\s+(build|test|run|vet|generate|mod|fmt|install)\b/g;
+const PYTHON_CMD_PATTERNS = [
+  /`uv\s+run\b/g,
+  /`poetry\s+run\b/g,
+  /`pytest\b/g,
+  /`python\s+-m\s+pytest\b/g,
+  /`pipenv\s+run\b/g,
+];
+
 // These are built-in package manager commands (not script names)
 const BUILTIN_COMMANDS = new Set([
   'install', 'add', 'remove', 'uninstall', 'update', 'upgrade',
@@ -122,6 +133,60 @@ export const staleCommand = {
               });
               break;
             }
+          }
+        }
+      }
+    }
+
+    // Non-JS ecosystem validation
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (isInCodeBlock(i, codeBlocks)) continue;
+
+      // Cargo commands — only valid if Cargo.toml exists
+      if (!projectData.hasCargo) {
+        CARGO_CMD_PATTERN.lastIndex = 0;
+        if (CARGO_CMD_PATTERN.test(line)) {
+          diagnostics.push({
+            rule: 'stale-command',
+            severity: 'error',
+            line: i + 1,
+            endLine: null,
+            message: '`cargo` command referenced but no `Cargo.toml` found in project root',
+            suggestion: 'Remove this command or add a Cargo.toml if this is a Rust project.',
+          });
+        }
+      }
+
+      // Go commands — only valid if go.mod exists
+      if (!projectData.goModule) {
+        GO_CMD_PATTERN.lastIndex = 0;
+        if (GO_CMD_PATTERN.test(line)) {
+          diagnostics.push({
+            rule: 'stale-command',
+            severity: 'error',
+            line: i + 1,
+            endLine: null,
+            message: '`go` command referenced but no `go.mod` found in project root',
+            suggestion: 'Remove this command or add a go.mod if this is a Go project.',
+          });
+        }
+      }
+
+      // Python commands — only valid if a Python manager is detected
+      if (!projectData.pythonManager) {
+        for (const pattern of PYTHON_CMD_PATTERNS) {
+          pattern.lastIndex = 0;
+          if (pattern.test(line)) {
+            diagnostics.push({
+              rule: 'stale-command',
+              severity: 'error',
+              line: i + 1,
+              endLine: null,
+              message: 'Python command referenced but no Python project files found (uv.lock, poetry.lock, requirements.txt, etc.)',
+              suggestion: 'Remove this command or ensure the project has a recognised Python dependency file.',
+            });
+            break; // one diagnostic per line
           }
         }
       }

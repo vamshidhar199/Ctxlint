@@ -35,8 +35,8 @@ Gloaguen et al. ([2026](https://arxiv.org/abs/2602.11988)) found that bloated co
 
 | Rule | Severity | Description |
 |------|----------|-------------|
-| `stale-file-ref` | error | References to files/directories that don't exist |
-| `stale-command` | error | Build commands that don't match package.json scripts |
+| `stale-file-ref` | error/warn | References to files/directories that don't exist. Downgrades to `warn` when the path exists with a monorepo prefix. |
+| `stale-command` | error | Build commands that don't match package.json scripts, Makefile targets, or project files for Rust/Go/Python |
 | `no-directory-tree` | error | Embedded directory tree structures agents ignore |
 | `redundant-readme` | warn | Content that overlaps with README.md |
 | `no-inferable-stack` | warn | Tech stack discoverable from package.json/tsconfig |
@@ -193,12 +193,22 @@ npm install -g @ctxlint/ctxlint
 ctxlint diff --fail-on-stale
 ```
 
+## Language support
+
+ctxlint is an npm CLI that lints context files in **any project**, regardless of language.
+
+| Ecosystem | `check` | `init` |
+|-----------|---------|--------|
+| Node.js (npm/yarn/pnpm/bun) | Full — validates scripts, detects PM mismatch | Generates commands from package.json |
+| Rust (Cargo) | Flags `cargo` commands if no `Cargo.toml` | Generates `cargo build/test/clippy` |
+| Go | Flags `go` commands if no `go.mod` | Generates `go build/test/fmt ./...` |
+| Python (uv/poetry/pip) | Flags `uv run`/`pytest` if no Python project files | Generates `uv run pytest` / `poetry run pytest` |
+| Makefile (any language) | Validates `make <target>` against Makefile | Lists Makefile targets |
+
 ## Current limitations
 
 ctxlint is useful today but not exhaustive. Known gaps:
 
-- **Monorepo path resolution** — paths written relative to a sub-package (e.g. `src/` in a `packages/foo/` workspace) are flagged as stale even though they're valid within that package's context.
-- **Non-JS ecosystems** — `stale-command` and `init` are optimized for npm/pnpm/yarn projects. Rust, Go, and Python projects get partial coverage.
 - **Semantic staleness** — rules check structural correctness (does the file exist?), not semantic freshness (is the description still accurate?).
 - **Precision target** — validated at ~91% precision across 5 real-world repos. Some false positives remain in unusual project layouts.
 

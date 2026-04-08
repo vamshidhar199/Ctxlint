@@ -1,45 +1,38 @@
 # Validation Analysis & Known Limitations
 
 Last validated: 2026-04-05 against 8 real-world repos (shallow clones).
-Current precision: ~88% across 5 repos with context files.
+Current precision: ~91% across 5 repos with context files.
 
 ---
 
-## Known limitations open for contribution
+## Fixed gaps
 
-These are confirmed gaps identified during real-repo validation. Each is a good starting point for contributors.
+### 1. Monorepo path resolution (`stale-file-ref`) ✓ Fixed in 1.0.3
 
-### 1. Monorepo path resolution (`stale-file-ref`)
+**Was:** Paths like `src/cli/next-dev.ts` were flagged as `error` even when the file exists at `packages/next/src/cli/next-dev.ts`.
 
-**Problem:** In monorepos, context files at the repo root reference paths relative to a sub-package (e.g. `src/cli/next-dev.ts` in next.js means `packages/next/src/cli/next-dev.ts`). ctxlint currently flags these as stale even though the file exists — it just has a monorepo prefix.
-
-**Current behavior:** Flags as `error` with a "did you mean `packages/next/src/cli/next-dev.ts`?" suggestion.
-
-**Desired behavior:** Detect when the queried path is a suffix of an existing file and downgrade to `warn` with a message like "path needs monorepo prefix — update to `packages/next/src/cli/next-dev.ts`".
-
-**Where to fix:** `src/rules/stale-file-ref.js` → `findFileSuggestion()` and `checkPath()`
+**Now:** `findFileSuggestion()` checks for suffix matches before basename matches. When a path is a suffix of an existing file, ctxlint emits `warn` (not `error`) with the message: "`src/cli/next-dev.ts` needs a monorepo prefix — update to `packages/next/src/cli/next-dev.ts`".
 
 **Affected repos:** next.js, codex, langchain
 
 ---
 
-### 2. Non-JS ecosystem support (`stale-command`, `init`)
+### 2. Non-JS ecosystem support (`stale-command`, `init`) ✓ Fixed in 1.0.3
 
-**Problem:** `stale-command` and `init` are optimized for npm/pnpm/yarn projects. Rust, Go, and Python projects get partial coverage — Makefile targets are detected but `Cargo.toml`, `pyproject.toml`, and `go.mod` scripts are not.
+**Was:** `stale-command` and `init` were JS-only. Rust/Go/Python projects got no validation or generated commands.
 
-**Current behavior:** Python/Rust/Go projects may get no build commands in `init` output, and `stale-command` won't catch stale `cargo`, `go`, or `uv` commands.
-
-**Desired behavior:**
-- `init` should detect and list `cargo build/test/clippy`, `go build/test`, `uv run/pytest` etc.
-- `stale-command` should validate commands against `Cargo.toml`, `pyproject.toml`, `go.mod`
-
-**Where to fix:** `src/commands/init.js` → add Python/Rust/Go script detection; `src/rules/stale-command.js` → add non-JS command validators
+**Now:**
+- `src/detector/project.js` detects `Cargo.toml` (`hasCargo`), `go.mod` (`goModule`), and `pyproject.toml` scripts (`pythonScripts`)
+- `stale-command` flags `cargo`/`go`/`uv`/`poetry`/`pytest` commands when the corresponding project file is absent
+- `init` generates `cargo build/test/clippy` for Rust, `go build/test/fmt ./...` for Go, and `uv run pytest` / `poetry run pytest` / `python -m pytest` for Python
 
 **Affected repos:** ruff, langchain (Python), codex (Rust)
 
 ---
 
-### 3. Semantic staleness (`stale-file-ref`)
+## Remaining known limitations open for contribution
+
+### 3. Semantic staleness (`stale-file-ref`) — open
 
 **Problem:** Rules check structural correctness (does the file exist?) but not semantic freshness (is the description of that file still accurate?). A file can exist but have been completely rewritten since the context file was last updated.
 
@@ -51,7 +44,7 @@ These are confirmed gaps identified during real-repo validation. Each is a good 
 
 ---
 
-### 4. `redundant-readme` borderline case (ruff)
+### 4. `redundant-readme` borderline case (ruff) — open
 
 **Problem:** ruff's "Development Guidelines" section was flagged at ~45% trigram overlap with the README "Rules" section. Manual review needed to confirm whether this is a true positive or the trigram threshold is too low for technical content.
 
@@ -63,7 +56,7 @@ These are confirmed gaps identified during real-repo validation. Each is a good 
 
 ---
 
-### 5. Token cost assumptions (`token-budget`)
+### 5. Token cost assumptions (`token-budget`) — open
 
 **Problem:** The cost projection is hardcoded for Claude Sonnet pricing at 5 developers, 20 sessions/day. This may not reflect every team's actual usage or model choice.
 
@@ -83,6 +76,7 @@ These are confirmed gaps identified during real-repo validation. Each is a good 
 | next.js | `stale-file-ref` `dist/`, `node_modules/`, `.next/` | FP | Skip generated dir segments |
 | next.js | `stale-file-ref` `react-dom/server.edge` | FP | Added npm subpath import guard |
 | ruff | `no-style-guide` naming convention description | FP | Tightened pattern to require line-start directive verb |
+| next.js, codex, langchain | `stale-file-ref` monorepo-relative paths | FP→warn | Suffix match detection — downgraded to `warn` with prefix suggestion |
 
 ## Precision
 

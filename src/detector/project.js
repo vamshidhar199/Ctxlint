@@ -161,6 +161,42 @@ export function scanProject(projectDir) {
     }
   }
 
+  // Rust: detect Cargo.toml
+  const hasCargo = existsSync(join(projectDir, 'Cargo.toml'));
+
+  // Go: parse go.mod for module name
+  let goModule = null;
+  const goModPath = join(projectDir, 'go.mod');
+  if (existsSync(goModPath)) {
+    try {
+      const goModContent = readFileSync(goModPath, 'utf8');
+      const match = goModContent.match(/^module\s+(\S+)/m);
+      if (match) goModule = match[1];
+    } catch {
+      // ignore
+    }
+  }
+
+  // Python: parse pyproject.toml for scripts
+  let pythonScripts = null;
+  const pyprojectPath = join(projectDir, 'pyproject.toml');
+  if (existsSync(pyprojectPath)) {
+    try {
+      const pyprojectContent = readFileSync(pyprojectPath, 'utf8');
+      // Match [project.scripts] or [tool.poetry.scripts] sections
+      const sectionMatch = pyprojectContent.match(/\[(?:project|tool\.poetry)\.scripts\]([\s\S]*?)(?=\n\[|\s*$)/);
+      if (sectionMatch) {
+        pythonScripts = {};
+        for (const line of sectionMatch[1].split('\n')) {
+          const m = line.match(/^([\w-]+)\s*=\s*"(.+)"/);
+          if (m) pythonScripts[m[1]] = m[2];
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   return {
     dir: projectDir,
     files,
@@ -176,5 +212,8 @@ export function scanProject(projectDir) {
     linterConfigs,
     readme,
     makefileTargets,
+    hasCargo,
+    goModule,
+    pythonScripts,
   };
 }

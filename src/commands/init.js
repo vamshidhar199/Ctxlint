@@ -45,8 +45,13 @@ export function generateContent(projectData, format = 'agents') {
   const scripts = projectData.scripts || {};
   const scriptEntries = Object.entries(scripts);
 
-  if (scriptEntries.length > 0 || (projectData.makefileTargets && projectData.makefileTargets.length > 0)) {
+  const hasNpmCommands = scriptEntries.length > 0 || (projectData.makefileTargets && projectData.makefileTargets.length > 0);
+  const hasNonJsCommands = projectData.hasCargo || projectData.goModule || projectData.pythonManager;
+
+  if (hasNpmCommands || hasNonJsCommands) {
     lines.push('## Build & test');
+
+    // npm/yarn/pnpm/bun scripts
     for (const [name] of scriptEntries) {
       const desc = describeScript(name);
       const suffix = name === 'test' && testFramework ? ` (${testFramework})` : '';
@@ -56,11 +61,40 @@ export function generateContent(projectData, format = 'agents') {
         lines.push(`- \`${pm} ${name}\`${suffix}`);
       }
     }
+
+    // Makefile targets
     if (projectData.makefileTargets) {
       for (const target of projectData.makefileTargets) {
         lines.push(`- \`make ${target}\``);
       }
     }
+
+    // Rust / Cargo
+    if (projectData.hasCargo) {
+      lines.push('- Build: `cargo build`');
+      lines.push('- Test: `cargo test`');
+      lines.push('- Lint: `cargo clippy`');
+    }
+
+    // Go
+    if (projectData.goModule) {
+      lines.push('- Build: `go build ./...`');
+      lines.push('- Test: `go test ./...`');
+      lines.push('- Format: `go fmt ./...`');
+    }
+
+    // Python
+    if (projectData.pythonManager) {
+      if (projectData.pythonManager === 'uv') {
+        lines.push('- Test: `uv run pytest`');
+        lines.push('- Lint: `uv run ruff check .`');
+      } else if (projectData.pythonManager === 'poetry') {
+        lines.push('- Test: `poetry run pytest`');
+      } else {
+        lines.push('- Test: `python -m pytest`');
+      }
+    }
+
     lines.push('');
   }
 

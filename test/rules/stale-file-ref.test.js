@@ -105,4 +105,37 @@ describe('stale-file-ref rule', () => {
     expect(diagnostics.length).toBeGreaterThanOrEqual(1);
     expect(diagnostics[0].suggestion).toContain('src/db/connection.ts');
   });
+
+  it('downgrades to warn with monorepo prefix suggestion when path is a suffix of an existing file', () => {
+    // Simulates: context references "src/cli/next-dev.ts" but file exists at "packages/next/src/cli/next-dev.ts"
+    const content = '- CLI entry: `src/cli/next-dev.ts`';
+    const parsed = parseContextFile(content);
+    const projectData = {
+      dir: '/fake/monorepo',
+      files: new Set(['packages/next/src/cli/next-dev.ts', 'packages/next/package.json']),
+      dirs: new Set(['packages', 'packages/next', 'packages/next/src', 'packages/next/src/cli']),
+    };
+
+    const diagnostics = staleFileRef.run(parsed, projectData);
+
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe('warn');
+    expect(diagnostics[0].message).toContain('needs a monorepo prefix');
+    expect(diagnostics[0].suggestion).toContain('packages/next/src/cli/next-dev.ts');
+  });
+
+  it('emits error (not warn) when path does not match any suffix in the project', () => {
+    const content = '- Old API: `src/old-api/handler.ts`';
+    const parsed = parseContextFile(content);
+    const projectData = {
+      dir: '/fake/monorepo',
+      files: new Set(['packages/next/src/new-api/handler.ts']),
+      dirs: new Set(['packages', 'packages/next', 'packages/next/src', 'packages/next/src/new-api']),
+    };
+
+    const diagnostics = staleFileRef.run(parsed, projectData);
+
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe('error');
+  });
 });
