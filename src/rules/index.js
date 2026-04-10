@@ -6,6 +6,7 @@ import { redundantReadme } from './redundant-readme.js';
 import { noStyleGuide } from './no-style-guide.js';
 import { maxLines } from './max-lines.js';
 import { tokenBudget } from './token-budget.js';
+import { ciCoverage } from './ci-coverage.js';
 
 export const rules = [
   noDirectoryTree,
@@ -16,4 +17,5 @@ export const rules = [
   noStyleGuide,
   maxLines,
   tokenBudget,
+  ciCoverage,
 ];

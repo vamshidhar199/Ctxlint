@@ -2,6 +2,7 @@
 
 Last validated: 2026-04-05 against 8 real-world repos (shallow clones).
 Current precision: ~91% across 5 repos with context files.
+Current version: 1.1.1 — includes monorepo path resolution, non-JS ecosystem support, SARIF output, watch mode, MCP config validation, `.ctxlintrc` config, `--strict` mode, expanded context file format support, `mcp-env-syntax` rule, and `ci-coverage` rule.
 
 ---
 
@@ -27,6 +28,54 @@ Current precision: ~91% across 5 repos with context files.
 - `init` generates `cargo build/test/clippy` for Rust, `go build/test/fmt ./...` for Go, and `uv run pytest` / `poetry run pytest` / `python -m pytest` for Python
 
 **Affected repos:** ruff, langchain (Python), codex (Rust)
+
+---
+
+### 3. SARIF output (`src/reporter/sarif.js`) ✓ Added in 1.0.3
+
+`--format sarif` emits a valid SARIF 2.1.0 document for GitHub Code Scanning integration. Severity mapping: `error → error`, `warn → warning`, `info → note`.
+
+---
+
+### 4. Watch mode (`src/commands/check.js`) ✓ Added in 1.0.3
+
+`--watch` re-lints on every context file save using Node's built-in `fs.watch`. 300ms debounce handles rapid editor saves. Terminal format only.
+
+---
+
+### 5. MCP config validation (`src/rules/mcp/`, `src/commands/mcp.js`) ✓ Added in 1.0.3
+
+`ctxlint mcp` validates `.mcp.json` and other MCP config locations. Rules: `mcp-schema`, `mcp-missing-command`, `mcp-hardcoded-secret`, `mcp-localhost-url`, `mcp-deprecated-transport`.
+
+---
+
+### 6. `.ctxlintrc` config file (`src/config.js`) ✓ Added in 1.1.0
+
+Per-project config via `.ctxlintrc` or `.ctxlintrc.json`. Supports `checks` (rule whitelist), `ignore` (rule blacklist), `strict`, `contextFiles`, and `tokenThresholds`. CLI flags always override config file.
+
+---
+
+### 7. `--strict` mode ✓ Added in 1.1.0
+
+`--strict` flag (or `"strict": true` in `.ctxlintrc`) causes ctxlint to exit 1 on warnings as well as errors. Useful for CI enforcement.
+
+---
+
+### 8. Expanded context file format support ✓ Added in 1.1.0
+
+Added `.windsurfrules`, `.clinerules`, `.aiderules`, and `CONVENTIONS.md` to `CONTEXT_FILES` in `src/constants.js`. ctxlint now lints 8 context file formats out of the box, covering Windsurf, Cline, and Aider users.
+
+---
+
+### 9. `mcp-env-syntax` rule ✓ Added in 1.1.0
+
+Validates that env var references use the correct syntax per MCP client. VS Code (`.vscode/mcp.json`) requires `${env:VAR}` syntax; using `${VAR}` there produces a `warn`. Rule receives the config file path to determine which client to check.
+
+---
+
+### 10. `ci-coverage` rule ✓ Added in 1.1.0
+
+Flags CI workflows in `.github/workflows/` that are not mentioned in the context file. Emits `info` severity to encourage documenting what each workflow does so agents understand the CI pipeline.
 
 ---
 

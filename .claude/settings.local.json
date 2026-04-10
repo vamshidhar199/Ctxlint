@@ -5,7 +5,29 @@
       "Bash(npm install:*)",
       "Bash(npm test:*)",
       "Bash(node:*)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git add:*)",
+      "Bash(rm -rf /tmp/ctxlint-npm-test)",
+      "Bash(mkdir /tmp/ctxlint-npm-test)",
+      "Read(//tmp/**)",
+      "Bash(npm init:*)",
+      "Bash(/tmp/ctxlint-npm-test/node_modules/.bin/ctxlint:*)",
+      "Bash(bash:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(rm -rf /tmp/qe-config-test /tmp/qe-strict-test /tmp/qe-custom-files /tmp/qe-formats /tmp/qe-mcp-env /tmp/qe-ci)",
+      "Bash(mkdir -p /tmp/qe-config-test)",
+      "Bash(echo \"NO_STRICT_EXIT:$?\")",
+      "Bash(echo \"WITH_STRICT_EXIT:$?\")",
+      "Bash(echo \"GREP_EXIT:$?\" node /Users/monishavamshi/Documents/Ctxlint/bin/ctxlint.js check /tmp/qe-ci)",
+      "Bash(echo \"GREP_EXIT:$?\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(echo \"exit with strict: $?\")",
+      "Bash(printf '{\"scripts\":{\"build\":\"tsc\",\"test\":\"vitest\"},\"dependencies\":{\"react\":\"18\",\"redux\":\"5\",\"typescript\":\"5\"}}')",
+      "Bash(echo \"exit without strict: $?\")"
     ]
   }
 }

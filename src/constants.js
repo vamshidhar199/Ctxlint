@@ -4,6 +4,10 @@ export const CONTEXT_FILES = [
   'CLAUDE.md',
   'GEMINI.md',
   '.github/copilot-instructions.md',
+  '.windsurfrules',
+  '.clinerules',
+  '.aiderules',
+  'CONVENTIONS.md',
 ];
 
 // Also check for .cursorrules (no extension) and .cursor/rules/ directory

@@ -4,6 +4,7 @@ import { check } from './commands/check.js';
 import { init } from './commands/init.js';
 import { slim } from './commands/slim.js';
 import { diff } from './commands/diff.js';
+import { mcp } from './commands/mcp.js';
 
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
@@ -17,10 +18,17 @@ program
 program
   .command('check [path]')
   .description('Lint context file(s) in the project')
-  .option('--format <type>', 'Output format: terminal (default), json', 'terminal')
+  .option('--format <type>', 'Output format: terminal (default), json, sarif', 'terminal')
   .option('--severity <level>', 'Minimum severity: info (default), warn, error', 'info')
+  .option('--watch', 'Re-lint on file change (terminal format only)')
+  .option('--strict', 'Exit 1 on warnings too (for CI)')
   .action(async (projectPath, options) => {
-    const exitCode = await check(projectPath || process.cwd(), options);
+    const exitCode = await check(projectPath || process.cwd(), {
+      format: options.format,
+      severity: options.severity,
+      watchMode: options.watch || false,
+      strict: options.strict || false,
+    });
     process.exit(exitCode);
   });
 
@@ -65,6 +73,19 @@ program
     const exitCode = await diff(projectPath || process.cwd(), {
       since: options.since || null,
       failOnStale: options.failOnStale || false,
+    });
+    process.exit(exitCode);
+  });
+
+program
+  .command('mcp [path]')
+  .description('Validate MCP server config files (.mcp.json, .cursor/mcp.json, etc.)')
+  .option('--format <type>', 'Output format: terminal (default), json', 'terminal')
+  .option('--severity <level>', 'Minimum severity: info (default), warn, error', 'info')
+  .action(async (projectPath, options) => {
+    const exitCode = await mcp(projectPath || process.cwd(), {
+      format: options.format,
+      severity: options.severity,
     });
     process.exit(exitCode);
   });

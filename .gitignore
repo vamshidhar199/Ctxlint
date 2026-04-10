@@ -4,3 +4,4 @@ validation-results/
 test-install/
 *.bak
 ctxlint-claude-code-spec.md
+scripts/test-npm-package.sh

@@ -3,51 +3,51 @@
 [![npm version](https://img.shields.io/npm/v/@ctxlint/ctxlint)](https://www.npmjs.com/package/@ctxlint/ctxlint)
 [![npm downloads](https://img.shields.io/npm/dt/@ctxlint/ctxlint)](https://www.npmjs.com/package/@ctxlint/ctxlint)
 [![license](https://img.shields.io/npm/l/@ctxlint/ctxlint)](./LICENSE)
-[![zero dependencies](https://img.shields.io/badge/dependencies-1-brightgreen)](./package.json)
+[![dependencies: 1](https://img.shields.io/badge/dependencies-1-brightgreen)](./package.json)
+[![tests: 118 passing](https://img.shields.io/badge/tests-118%20passing-brightgreen)](#)
 
-Lint your `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules` and any AI agent context file. Catch stale references, dead commands, and token waste before they hurt your agent.
+**The linter for AI agent context files and MCP configs.**
+
+Lint `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.windsurfrules`, `.clinerules`, `.aiderules`, `CONVENTIONS.md`, `.cursorrules`, and `.mcp.json`. Catch stale file references, dead build commands, hardcoded secrets, token waste, and more — before they hurt your agent.
 
 ```bash
 npx @ctxlint/ctxlint check
 ```
 
-> **Contributions welcome.** The rules work well on real repos, but there are edge cases (monorepos, unusual project layouts) where precision can be improved. If you hit a false positive or missing check, please open an issue or PR.
+---
 
-## Why ctxlint
+## Why your context file is probably hurting your agent
+
+Research from ETH Zurich ([Gloaguen et al., 2026](https://arxiv.org/abs/2602.11988)) found that bloated context files **reduce task success rates and increase inference costs by over 20%**. References to files that no longer exist, commands that don't match your package.json, directory trees the agent regenerates anyway — all of it is noise that degrades performance.
+
+ctxlint finds that noise and helps you remove it.
+
+---
+
+## What makes ctxlint different
 
 | | ctxlint | others |
 |---|---|---|
 | Runtime dependencies | **1** (commander only) | 5–9 |
-| Commands | **check, init, slim, diff** | check only |
+| Commands | **check, init, slim, diff, mcp** | check only |
 | Auto-fix | **✓ `slim` removes flagged content** | ✗ |
 | Generates context files | **✓ `init` from project metadata** | ✗ |
 | Drift detection | **✓ `diff` via git history** | ✗ |
+| MCP config validation | **✓ secrets, localhost, SSE, env syntax** | ✗ |
+| Watch mode | **✓ `--watch` re-lints on save** | ✗ |
+| SARIF output | **✓ GitHub Code Scanning** | ✗ |
+| Multi-language | **✓ JS, Rust, Go, Python** | JS only |
+| Config file | **✓ `.ctxlintrc` per-project config** | ✗ |
+| Strict mode | **✓ `--strict` exits 1 on warnings** | ✗ |
 | Research-backed rules | **✓ cited papers** | ✗ |
 | Validated precision | **~91% on real repos** | unknown |
 
-**Zero dependencies** means `npx @ctxlint/ctxlint check` starts instantly, with no supply chain risk and no bloat in your project.
-
-## Why this exists
-
-Gloaguen et al. ([2026](https://arxiv.org/abs/2602.11988)) found that bloated context files reduce task success rates and increase inference costs by over 20%. Lulla et al. ([2026](https://arxiv.org/abs/2601.20404)) found that well-structured context files correlate with 28% faster agent runtime. ctxlint helps you get from the first to the second.
-
-## What it checks
-
-| Rule | Severity | Description |
-|------|----------|-------------|
-| `stale-file-ref` | error/warn | References to files/directories that don't exist. Downgrades to `warn` when the path exists with a monorepo prefix. |
-| `stale-command` | error | Build commands that don't match package.json scripts, Makefile targets, or project files for Rust/Go/Python |
-| `no-directory-tree` | error | Embedded directory tree structures agents ignore |
-| `redundant-readme` | warn | Content that overlaps with README.md |
-| `no-inferable-stack` | warn | Tech stack discoverable from package.json/tsconfig |
-| `max-lines` | warn/error | Files over 200 lines almost always contain bloat |
-| `no-style-guide` | info | Style rules that belong in a linter, not a context file |
-| `token-budget` | warn | Token cost estimate and signal-to-noise ratio |
+---
 
 ## Install
 
 ```bash
-# Run without installing
+# Run without installing (zero setup)
 npx @ctxlint/ctxlint check
 
 # Or install globally
@@ -55,31 +55,53 @@ npm install -g @ctxlint/ctxlint
 ctxlint check
 ```
 
-## Quick start
-
-```bash
-# Check for issues in the current directory
-ctxlint check
-
-# Check a specific project
-ctxlint check /path/to/project
-
-# Output machine-readable JSON (for CI)
-ctxlint check --format json
-
-# Only show warnings and errors (hide info)
-ctxlint check --severity warn
-```
+---
 
 ## Commands
 
 ### `check` — lint your context file
 
 ```bash
-ctxlint check [path] [--format terminal|json] [--severity info|warn|error]
+ctxlint check [path] [--format terminal|json|sarif] [--severity info|warn|error] [--watch] [--strict]
 ```
 
-Exits 0 if no errors, 1 if errors found (suitable for CI).
+Runs all rules against every context file found in the project. Exits `0` if no errors, `1` if errors found — suitable for CI.
+
+```bash
+# Lint current directory
+ctxlint check
+
+# Only show warnings and errors
+ctxlint check --severity warn
+
+# Exit 1 on warnings too (stricter CI enforcement)
+ctxlint check --strict
+
+# Machine-readable JSON for scripts
+ctxlint check --format json
+
+# SARIF for GitHub Code Scanning
+ctxlint check --format sarif > results.sarif
+
+# Re-lint on every save (great during active editing)
+ctxlint check --watch
+```
+
+### `mcp` — validate MCP server configs
+
+```bash
+ctxlint mcp [path] [--format terminal|json] [--severity info|warn|error]
+```
+
+Validates `.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`, and `.amazonq/mcp.json`. Catches hardcoded secrets, localhost URLs, deprecated SSE transport, and missing server definitions.
+
+```bash
+# Check current directory
+ctxlint mcp
+
+# Machine-readable output for CI
+ctxlint mcp --format json
+```
 
 ### `init` — generate a minimal context file
 
@@ -87,16 +109,16 @@ Exits 0 if no errors, 1 if errors found (suitable for CI).
 ctxlint init [path] [--format agents|claude|gemini|all] [--dry-run] [--force]
 ```
 
-Generates a context file from your project metadata. Only includes non-inferable content: build commands, non-standard patterns, and version constraints. Never generates a directory tree.
+Generates a context file from your project metadata. Only includes non-inferable content: build commands, version constraints, and non-standard patterns. Never emits a directory tree. Supports JS, Rust, Go, and Python projects.
 
 ```bash
 # Preview without writing
 ctxlint init --dry-run
 
-# Write AGENTS.md
+# Write AGENTS.md (default)
 ctxlint init
 
-# Write all three formats
+# Write all three formats at once
 ctxlint init --format all
 ```
 
@@ -106,7 +128,7 @@ ctxlint init --format all
 ctxlint slim <file> [--dry-run] [--backup]
 ```
 
-Automatically removes all error-severity issues from a context file in place. The only context file linter with auto-fix.
+Automatically removes all `error`-severity issues from a context file in place. The only context file linter with auto-fix.
 
 ```bash
 # Preview what would be removed
@@ -122,7 +144,7 @@ ctxlint slim --backup AGENTS.md
 ctxlint diff [path] [--since <ref>] [--fail-on-stale]
 ```
 
-Finds references in your context file that have gone stale since it was last updated.
+Compares your context file against git history to find references that have gone stale since the file was last updated.
 
 ```bash
 # Check for drift since AGENTS.md was last committed
@@ -131,18 +153,49 @@ ctxlint diff
 # Check against a specific git ref
 ctxlint diff --since main
 
-# Exit 1 if any drift (for CI pre-commit hooks)
+# Exit 1 if any drift (for pre-commit hooks)
 ctxlint diff --fail-on-stale
 ```
 
+---
+
+## What it checks
+
+### Context file rules
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| `stale-file-ref` | error / warn | References to files/dirs that don't exist. Downgrades to `warn` for monorepo prefix mismatches. |
+| `stale-command` | error | Build commands that don't match package.json scripts, Makefile targets, Cargo.toml, go.mod, or pyproject.toml |
+| `no-directory-tree` | error | Embedded directory trees — agents regenerate these on their own |
+| `redundant-readme` | warn | Content that duplicates README.md (trigram overlap) |
+| `no-inferable-stack` | warn | Tech stack descriptions discoverable from package.json / tsconfig / Cargo.toml |
+| `max-lines` | warn / error | Files over 200 lines almost always contain bloat |
+| `no-style-guide` | info | Style rules that belong in a linter config, not a context file |
+| `token-budget` | warn | Token cost estimate, signal-to-noise ratio, and monthly savings projection |
+| `ci-coverage` | info | CI workflows in `.github/workflows/` not mentioned in the context file |
+
+### MCP config rules
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| `mcp-schema` | error | `mcpServers` root key missing or malformed |
+| `mcp-missing-command` | error | Server definition has neither `command` nor `url` — can't start |
+| `mcp-hardcoded-secret` | error | API keys or tokens hardcoded in `env` blocks |
+| `mcp-localhost-url` | warn | `url` points to localhost — only works on one machine |
+| `mcp-deprecated-transport` | warn | SSE transport deprecated in MCP spec 2025-03-26 |
+| `mcp-env-syntax` | warn | Env var references use wrong syntax for the client (e.g. `${VAR}` instead of `${env:VAR}` in VS Code) |
+
+---
+
 ## Example output
 
-Running `ctxlint check` on a typical over-specified context file:
+### `ctxlint check`
 
 ```
 CLAUDE.md
 
-  ✗ no-directory-tree  Lines 14-34 contain a directory tree (21 lines, ~72 tokens).
+  ✗ no-directory-tree  Lines 14-34 contain a directory tree (21 lines, ~72 tokens)
      Agents discover file structure via ls/find on their own.
 
   ✗ stale-command  `npm run test:integration` — script "test:integration" does not exist in package.json
@@ -158,16 +211,68 @@ CLAUDE.md
      Agents follow formatter output, not prose instructions.
 
   ⚠ token-budget  Context file: 58 lines, ~366 tokens
-     Signal-to-noise ratio: 0.00 (very poor)
+     Signal-to-noise ratio: 0.41 (poor)
      Estimated monthly cost (5 developers): $0.32 → $0.00 after fixes
 
 Summary:
-  6 errors, 5 warnings, 7 info
+  3 errors, 2 warnings, 1 info
 ```
+
+### `ctxlint mcp`
+
+```
+.mcp.json
+
+  ✗ mcp-hardcoded-secret  `openai-tools.env.OPENAI_API_KEY` appears to contain a hardcoded secret
+     Use an environment variable reference instead: "OPENAI_API_KEY": "${OPENAI_API_KEY}"
+
+  ⚠ mcp-localhost-url  `local-search.url` points to localhost (http://localhost:8080/mcp)
+     Localhost URLs only work on your machine.
+
+  ⚠ mcp-deprecated-transport  `local-search.transport` uses deprecated SSE transport
+     SSE was deprecated in MCP spec 2025-03-26. Remove the transport field — HTTP is now the default.
+
+Summary:
+  1 error, 2 warnings, 0 info
+```
+
+---
+
+## Configuration
+
+Create a `.ctxlintrc` (or `.ctxlintrc.json`) file in your project root to configure ctxlint per-project:
+
+```json
+{
+  "checks": ["stale-file-ref", "stale-command", "no-directory-tree"],
+  "ignore": ["no-style-guide"],
+  "strict": false,
+  "contextFiles": ["CUSTOM_AGENTS.md"],
+  "tokenThresholds": {
+    "info": 500,
+    "warning": 2000,
+    "error": 5000
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `checks` | `string[]` or `null` | `null` (all) | Whitelist of rules to run. `null` runs all rules. |
+| `ignore` | `string[]` | `[]` | Rules to skip entirely. |
+| `strict` | `boolean` | `false` | Exit 1 on warnings, not just errors. Overridden by `--strict` CLI flag. |
+| `contextFiles` | `string[]` | `[]` | Additional context file names to lint beyond the defaults. |
+| `tokenThresholds.info` | `number` | `500` | Line count threshold for `info` severity in `token-budget`. |
+| `tokenThresholds.warning` | `number` | `2000` | Line count threshold for `warn` severity in `token-budget`. |
+| `tokenThresholds.error` | `number` | `5000` | Line count threshold for `error` severity in `token-budget`. |
+
+CLI flags always take precedence over `.ctxlintrc` settings.
+
+---
 
 ## CI integration
 
-### GitHub Actions
+### GitHub Actions — basic
 
 ```yaml
 name: Lint context file
@@ -181,63 +286,93 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install -g @ctxlint/ctxlint
-      - run: ctxlint check --severity warn
+      - run: npx @ctxlint/ctxlint check --severity warn
+      - run: npx @ctxlint/ctxlint mcp
+```
+
+### GitHub Actions — with Code Scanning (SARIF)
+
+```yaml
+name: Lint context file
+on: [push, pull_request]
+
+jobs:
+  ctxlint:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npx @ctxlint/ctxlint check --format sarif > ctxlint.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ctxlint.sarif
 ```
 
 ### Pre-commit hook
 
 ```bash
 # .git/hooks/pre-commit
-npm install -g @ctxlint/ctxlint
-ctxlint diff --fail-on-stale
+npx @ctxlint/ctxlint diff --fail-on-stale
+npx @ctxlint/ctxlint mcp
 ```
+
+---
 
 ## Language support
 
-ctxlint is an npm CLI that lints context files in **any project**, regardless of language.
+ctxlint is an npm CLI that works on **any project**, regardless of language.
 
 | Ecosystem | `check` | `init` |
 |-----------|---------|--------|
-| Node.js (npm/yarn/pnpm/bun) | Full — validates scripts, detects PM mismatch | Generates commands from package.json |
+| Node.js (npm/yarn/pnpm/bun) | Validates scripts, detects PM mismatch | Generates commands from package.json |
 | Rust (Cargo) | Flags `cargo` commands if no `Cargo.toml` | Generates `cargo build/test/clippy` |
 | Go | Flags `go` commands if no `go.mod` | Generates `go build/test/fmt ./...` |
-| Python (uv/poetry/pip) | Flags `uv run`/`pytest` if no Python project files | Generates `uv run pytest` / `poetry run pytest` |
+| Python (uv/poetry/pip) | Flags `uv run`/`pytest` if no Python files | Generates `uv run pytest` / `poetry run pytest` |
 | Makefile (any language) | Validates `make <target>` against Makefile | Lists Makefile targets |
+
+---
 
 ## Current limitations
 
-ctxlint is useful today but not exhaustive. Known gaps:
+- **Semantic staleness** — rules check whether a file *exists*, not whether its *description* is still accurate.
+- **Precision** — validated at ~91% on 5 real-world repos. Some false positives remain in unusual project layouts.
 
-- **Semantic staleness** — rules check structural correctness (does the file exist?), not semantic freshness (is the description still accurate?).
-- **Precision target** — validated at ~91% precision across 5 real-world repos. Some false positives remain in unusual project layouts.
+See [`analysis.md`](./analysis.md) for the full false-positive breakdown.
 
-See [`analysis.md`](./analysis.md) for the full false-positive breakdown from real-repo validation.
+---
 
 ## Contributing
 
-Contributions are very welcome — the goal is to grow ctxlint into the standard linter for AI agent context files.
+Contributions are welcome — the goal is to make ctxlint the standard linter for AI agent context files.
 
 **Good first issues:**
-- Add a rule for a pattern you've seen in real context files
-- Improve monorepo path resolution in `stale-file-ref`
-- Add `stale-command` support for `Makefile`, `pyproject.toml`, or `Cargo.toml`
-- Improve `init` output for Python/Rust/Go projects
+- Add a new MCP rule (e.g. cross-client config consistency, duplicate server detection)
+- Improve semantic staleness detection in `diff`
+- Improve token cost configuration (`--team-size`, `--sessions-per-day`)
+- Add `.ctxlintrc` validation (schema errors for unknown fields)
 
 **How to contribute:**
 1. Fork and clone the repo
 2. `npm install`
 3. Write your rule in `src/rules/` — each rule exports `{ name, severity, description, run(parsedFile, projectData) → Diagnostic[] }`
 4. Add tests in `test/rules/` and a fixture in `test/fixtures/` if needed
-5. Run `npm test` — all 110 tests must pass
+5. Run `npm test` — all tests must pass
 6. Open a PR
 
 See `AGENTS.md` for architecture notes and project conventions.
 
+---
+
 ## Research
 
-- **Gloaguen et al. (2026)**: [Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — found that bloated context files tend to *reduce* task success rates while increasing inference cost by over 20%. Recommends minimal, focused context files.
-- **Lulla et al. (2026)**: [On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents: arXiv:2601.20404](https://arxiv.org/abs/2601.20404) — well-structured AGENTS.md files correlate with ~28% lower runtime and ~16% reduced token consumption while maintaining comparable task completion rates.
+- **Gloaguen et al. (2026)**: [Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? arXiv:2602.11988](https://arxiv.org/abs/2602.11988) — bloated context files reduce task success rates and increase inference cost by over 20%.
+- **Lulla et al. (2026)**: [On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents: arXiv:2601.20404](https://arxiv.org/abs/2601.20404) — well-structured context files correlate with ~28% lower runtime and ~16% reduced token consumption.
+
+---
 
 ## License
 
