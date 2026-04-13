@@ -1,6 +1,6 @@
 {
   "name": "@ctxlint/ctxlint",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Lint your AGENTS.md, CLAUDE.md, and AI agent context files. Catch stale refs, dead commands, and token waste.",
   "type": "module",
   "bin": {
