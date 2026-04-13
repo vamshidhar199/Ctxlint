@@ -2,9 +2,11 @@
 
 [![npm version](https://img.shields.io/npm/v/@ctxlint/ctxlint)](https://www.npmjs.com/package/@ctxlint/ctxlint)
 [![npm downloads](https://img.shields.io/npm/dt/@ctxlint/ctxlint)](https://www.npmjs.com/package/@ctxlint/ctxlint)
+[![CI](https://github.com/ctxlint/Ctxlint/actions/workflows/ci.yml/badge.svg)](https://github.com/ctxlint/Ctxlint/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/@ctxlint/ctxlint)](./LICENSE)
 [![dependencies: 1](https://img.shields.io/badge/dependencies-1-brightgreen)](./package.json)
 [![tests: 118 passing](https://img.shields.io/badge/tests-118%20passing-brightgreen)](#)
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-ctxlint-blue?logo=github)](https://github.com/marketplace/actions/ctxlint)
 
 **The linter for AI agent context files and MCP configs.**
 
@@ -272,7 +274,7 @@ CLI flags always take precedence over `.ctxlintrc` settings.
 
 ## CI integration
 
-### GitHub Actions — basic
+### GitHub Actions — Marketplace action (recommended)
 
 ```yaml
 name: Lint context file
@@ -283,12 +285,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npx @ctxlint/ctxlint check --severity warn
-      - run: npx @ctxlint/ctxlint mcp
+      - uses: ctxlint/ctxlint-action@v1
 ```
+
+Fail on warnings too:
+
+```yaml
+      - uses: ctxlint/ctxlint-action@v1
+        with:
+          strict: true
+```
+
+Lint a subdirectory (e.g. in a monorepo):
+
+```yaml
+      - uses: ctxlint/ctxlint-action@v1
+        with:
+          path: ./packages/my-agent
+```
+
+**Inputs**
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `path` | `.` | Project directory to scan |
+| `strict` | `false` | Exit 1 on warnings in addition to errors |
+| `fail-on-warnings` | `false` | Alias for `strict` |
+
+**Outputs**
+
+| Output | Description |
+|--------|-------------|
+| `issues-found` | Total number of issues detected |
+| `exit-code` | Raw exit code returned by ctxlint |
+
+---
 
 ### GitHub Actions — with Code Scanning (SARIF)
 
