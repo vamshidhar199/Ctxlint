@@ -8,11 +8,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/vamshidhar199/Ctxlint.git"
+    "url": "https://github.com/ctxlint/Ctxlint.git"
   },
-  "homepage": "https://github.com/vamshidhar199/Ctxlint#readme",
+  "homepage": "https://github.com/ctxlint/Ctxlint#readme",
   "bugs": {
-    "url": "https://github.com/vamshidhar199/Ctxlint/issues"
+    "url": "https://github.com/ctxlint/Ctxlint/issues"
   },
   "scripts": {
     "test": "vitest run",
