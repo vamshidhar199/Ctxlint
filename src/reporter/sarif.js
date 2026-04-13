@@ -25,7 +25,7 @@ const RULE_METADATA = {
   'token-budget':        { name: 'TokenBudget',        short: 'Token cost estimate and signal-to-noise ratio' },
 };
 
-const HELP_URI = 'https://github.com/vamshidhar199/Ctxlint#what-it-checks';
+const HELP_URI = 'https://github.com/ctxlint/Ctxlint#what-it-checks';
 
 // Accumulates results across multiple files — call reportSarif() once per file,
 // then flushSarif() at the end to emit the full SARIF document.
@@ -81,7 +81,7 @@ export function flushSarif() {
           driver: {
             name: 'ctxlint',
             version,
-            informationUri: 'https://github.com/vamshidhar199/Ctxlint',
+            informationUri: 'https://github.com/ctxlint/Ctxlint',
             rules,
           },
         },
